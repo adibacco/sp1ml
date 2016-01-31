@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<targetDefinitions xmlns="http://openstm32.org/stm32TargetDefinitions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://openstm32.org/stm32TargetDefinitions stm32TargetDefinitions.xsd">
+  <board id="sp1ml">
+    <name>sp1ml</name>
+    <mcuId>stm32l151rbhx</mcuId>
+    <dbgIF>JTAG</dbgIF>
+    <dbgDEV>ST-LinkV2</dbgDEV>
+  </board>
+</targetDefinitions>
