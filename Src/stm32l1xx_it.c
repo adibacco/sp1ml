@@ -34,7 +34,7 @@
 #include "stm32l1xx_hal.h"
 #include "stm32l1xx.h"
 #include "stm32l1xx_it.h"
-
+#include "radio_gpio.h"
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -83,6 +83,14 @@ void RTC_WKUP_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void EXTI4_IRQHandler(void)
+{
+	  if(__HAL_GPIO_EXTI_GET_IT(RADIO_GPIO_3_EXTI_LINE) != RESET)
+	  {
+	    __HAL_GPIO_EXTI_CLEAR_IT(RADIO_GPIO_3_EXTI_LINE);
 
+	    P2PInterruptHandler();
+	  }
+}
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

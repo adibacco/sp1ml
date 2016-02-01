@@ -187,33 +187,8 @@ RadioGpioPin;
 #if defined(USE_SP1ML)
 #define RADIO_GPIO_3_EXTI_IRQN                     EXTI4_IRQn
 #define RADIO_GPIO_3_EXTI_IRQ_HANDLER              EXTI4_IRQHandler
-
-#elif defined(USE_STM32F4XX_NUCLEO)
-#define RADIO_GPIO_3_EXTI_IRQN                     EXTI9_5_IRQn 
-#define RADIO_GPIO_3_EXTI_IRQ_HANDLER              EXTI9_5_IRQHandler
 #endif
 
-#else
-
-#define RADIO_GPIO_3_PORT                        GPIOA
-#define RADIO_GPIO_3_PIN                         GPIO_PIN_0
-#define RADIO_GPIO_3_CLOCK_ENABLE()                __GPIOA_CLK_ENABLE()
-#define RADIO_GPIO_3_CLOCK_DISABLE()               __GPIOA_CLK_ENABLE() 
-#define RADIO_GPIO_3_SPEED                       GPIO_SPEED_HIGH
-#define RADIO_GPIO_3_PUPD                        GPIO_NOPULL
-#define RADIO_GPIO_3_EXTI_LINE                   GPIO_PIN_0
-#define RADIO_GPIO_3_EXTI_MODE                   GPIO_MODE_IT_FALLING
-#define RADIO_GPIO_3_EXTI_PREEMPTION_PRIORITY    2
-#define RADIO_GPIO_3_EXTI_SUB_PRIORITY           2
-
-#if defined(USE_STM32L0XX_NUCLEO)
-#define RADIO_GPIO_3_EXTI_IRQN                   EXTI0_1_IRQn5_IRQn 
-#define RADIO_GPIO_3_EXTI_IRQ_HANDLER            EXTI0_1_IRQHandler
-
-#elif defined(USE_STM32F4XX_NUCLEO)
-#define RADIO_GPIO_3_EXTI_IRQN                     EXTI0_IRQn 
-#define RADIO_GPIO_3_EXTI_IRQ_HANDLER              EXTI0_IRQHandler
-#endif
 
 #endif
 

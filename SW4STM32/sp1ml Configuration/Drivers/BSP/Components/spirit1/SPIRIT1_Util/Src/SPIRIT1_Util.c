@@ -527,7 +527,8 @@ void Spirit1SetRxTimeout(float cRxTimeOut)
     /* RX timeout config */
     SpiritTimerSetRxTimeoutMs(cRxTimeOut);
     Spirit1EnableSQI();
-    SpiritTimerSetRxTimeoutStopCondition(RSSI_AND_SQI_ABOVE_THRESHOLD);  }
+    SpiritTimerSetRxTimeoutStopCondition(NO_TIMEOUT_STOP);
+  }
 }
 
 /**

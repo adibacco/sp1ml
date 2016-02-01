@@ -37,12 +37,23 @@
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
+#include "spirit1_appli.h"
 
 /* USER CODE BEGIN Includes */
+#define TX_BUFFER_SIZE   20
+#define RX_BUFFER_SIZE   96
+#define RX_MODE 0
+#define TX_MODE 1
 
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+uint8_t TxLength = TX_BUFFER_SIZE;
+uint8_t RxLength = 0;
+uint8_t aTransmitBuffer[TX_BUFFER_SIZE] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,\
+                                                                16,17,18,19,20};
+uint8_t aReceiveBuffer[RX_BUFFER_SIZE] = {0x00};
+uint8_t mode = TX_MODE;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -106,32 +117,53 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+
+  if (mode == RX_MODE) {
+		while (1) {
+			for (int i = 0; i < 4; i++) {
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+				HAL_Delay(50);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
+				HAL_Delay(50);
+
+			}
+
+			__HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+			while ((PWR->CSR & (uint32_t) 0x00000001) != 0)
+				;
+
+			HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 8192, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+
+			// Uncomment to enable wake up from pin
+			//HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);
+			MCU_Enter_StopMode();
+
+			AppliFrame_t txFrame;
+		    txFrame.Cmd = 1;
+		    txFrame.CmdLen = 0x01;
+		    txFrame.Cmdtag = 8;
+		    txFrame.CmdType = 2;
+		    txFrame.DataBuff = aTransmitBuffer;
+		    txFrame.DataLen = 5;
+
+		    AppliSendBuff(&txFrame, txFrame.DataLen);
+
+
+			/* USER CODE END WHILE */
+
+			/* USER CODE BEGIN 3 */
+
+		}
+  }
+  else
   {
-	  for (int i = 0; i < 11; i++) {
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
+	  while (1) {
 
-		  HAL_Delay(100);
+		  uint8_t cRxlen = 0;
+	      AppliReceiveBuff(aReceiveBuffer, cRxlen);
+		  HAL_Delay(2000);
+
 	  }
-
-	  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-	  while((PWR->CSR & (uint32_t) 0x00000001)!=0);
-
-	  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 8192, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
-
-	  // Uncomment to enable wake up from pin
-	  //HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);
-	  MCU_Enter_StopMode();
-
-	  for (int i = 0; i < 101; i++) {
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
-
-		  HAL_Delay(20);
-	  }
-  /* USER CODE END WHILE */
-
-  /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 

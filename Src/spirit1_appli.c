@@ -210,7 +210,7 @@ MCULowPowerMode_t *pMCU_LPM_Comm;
 RadioLowPowerMode_t  *pRadio_LPM_Comm;
 /*Flags declarations*/
 volatile FlagStatus xRxDoneFlag = RESET, xTxDoneFlag=RESET, cmdFlag=RESET;
-volatile FlagStatus xStartRx=RESET, rx_timeout=RESET, exitTime=RESET;
+volatile FlagStatus xStartRx=RESET, rx_timeout=RESET, exitTime=RESET, rx_error=RESET;
 volatile FlagStatus datasendFlag=RESET, wakeupFlag=RESET;
 volatile FlagStatus PushButtonStatusWakeup=RESET;
 volatile FlagStatus PushButtonStatusData=RESET;
@@ -437,17 +437,20 @@ void AppliReceiveBuff(uint8_t *RxFrameBuff, uint8_t cRxlen)
 
   pRadioDriver->SetPayloadLen(PAYLOAD_LEN);
   /* rx timeout config */
-  pRadioDriver->SetRxTimeout(RECEIVE_TIMEOUT);
+  pRadioDriver->SetRxTimeout(1000);
   
   /* IRQ registers blanking */
   pRadioDriver->ClearIrqStatus();
+  SpiritIrqGetStatus(&xIrqStatus);
+
   /* RX command */
   pRadioDriver->StartRx();      
     
   /* wait for data received or timeout period occured */
-  while((RESET == xRxDoneFlag)&&(RESET == rx_timeout)&&(SET == exitTime));
+  while((RESET == xRxDoneFlag)&&(RESET == rx_timeout));
   
-  if((rx_timeout==SET)||(exitTime==RESET))
+
+  if(rx_timeout==SET)
   {
     rx_timeout = RESET;
   }
@@ -761,20 +764,7 @@ void RadioSleep(void)
 #endif
 }
 
-/**
-* @brief  This routine updates the respective status for key press.
-* @param  None
-* @retval None
-*/
-void Set_KeyStatus(FlagStatus val)
-{
-  if(val==SET)
-  {
-    KEYStatusData = 1;
-  }
-  else
-    KEYStatusData = 0;
-}
+
 
 /**
 * @brief  This function handles External interrupt request. In this application it is used
@@ -801,6 +791,7 @@ void P2PInterruptHandler(void)
   /* Check the SPIRIT RX_DATA_DISC IRQ flag */
   else if(xIrqStatus.IRQ_RX_DATA_DISC)
   {    
+	rx_error = SET;
     /* RX command - to ensure the device will be ready for the next reception */
     if(xIrqStatus.IRQ_RX_TIMEOUT)
     {
@@ -848,30 +839,7 @@ void HAL_SYSTICK_Callback(void)
 /**
 * @}
 */
-/**
-  * @brief GPIO EXTI callback
-  * @param uint16_t GPIO_Pin
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-#if defined(MCU_STOP_MODE)/*if MCU is in stop mode*/        
 
-  /* Clear Wake Up Flag */
-  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-      
-  /* Configures system clock after wake-up from STOP: enable HSE, PLL and select
-    PLL as system clock source (HSE and PLL are disabled in STOP mode) */
-    SystemClockConfig_STOP(); 
-#endif
-#if defined(MCU_SLEEP_MODE) 
-    /* Resume Tick interrupt if disabled prior to sleep mode entry*/
-    HAL_ResumeTick();
-#endif 
-    
-    /* Initialize LEDs*/
-    RadioShieldLedInit(RADIO_SHIELD_LED);
-}
 /**
 * @}
 */
