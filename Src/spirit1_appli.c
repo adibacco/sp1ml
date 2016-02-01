@@ -453,15 +453,19 @@ void AppliReceiveBuff(uint8_t *RxFrameBuff, uint8_t cRxlen)
 
   if(rx_timeout==SET)
   {
+	HAL_UART_Transmit(&huart1, "T ", 2, 1000);
+
     rx_timeout = RESET;
   }
   else if(xRxDoneFlag) 
   {
+
     xRxDoneFlag=RESET;
 
     pRadioDriver->GetRxPacket(RxFrameBuff,&cRxlen); 
     /*rRSSIValue = Spirit1GetRssiTH();*/
-    
+    HAL_UART_Transmit(&huart1, "Received\n", 9, 1000);
+
   
     xRxFrame.Cmd = RxFrameBuff[0];
     xRxFrame.CmdLen = RxFrameBuff[1];
@@ -478,6 +482,9 @@ void AppliReceiveBuff(uint8_t *RxFrameBuff, uint8_t cRxlen)
     if(xRxFrame.Cmd == LED_TOGGLE)
     {
       RadioShieldLedOn(RADIO_SHIELD_LED);
+      HAL_Delay(DELAY_RX_LED_TOGGLE);
+      RadioShieldLedOff(RADIO_SHIELD_LED);
+
       cmdFlag = SET;      
     }
     if(xRxFrame.Cmd == ACK_OK)
@@ -489,12 +496,6 @@ void AppliReceiveBuff(uint8_t *RxFrameBuff, uint8_t cRxlen)
       }
       RadioShieldLedOff(RADIO_SHIELD_LED);
             
-#if defined(LPM_ENABLE)
-#if defined(RF_STANDBY)/*||defined(RF_SLEEP)*/
-    wakeupFlag = RESET;
-#endif
-    Enter_LP_mode();
-#endif
     }
   }
 }

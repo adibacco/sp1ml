@@ -150,7 +150,7 @@
 #define ACK_OK                          0x01
 #define MAX_BUFFER_LEN                  96
 #define TIME_TO_EXIT_RX                 3000
-#define DELAY_RX_LED_TOGGLE             200   
+#define DELAY_RX_LED_TOGGLE             100
 #define DELAY_TX_LED_GLOW               1000 
 #define LPM_WAKEUP_TIME                 100
 #define DATA_SEND_TIME                  30

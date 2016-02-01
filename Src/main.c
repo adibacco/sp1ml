@@ -105,6 +105,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
 
   if (mode == TX_MODE) {
 		while (1) {
@@ -116,8 +117,7 @@ int main(void)
 
 			}
 
-
-			HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 8192, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+			HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 16384, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
 
 			// Uncomment to enable wake up from pin
 			//HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);
@@ -125,7 +125,7 @@ int main(void)
 			Exit_LP_mode();
 
 			AppliFrame_t txFrame;
-		    txFrame.Cmd = 1;
+		    txFrame.Cmd = LED_TOGGLE;
 		    txFrame.CmdLen = 0x01;
 		    txFrame.Cmdtag = 8;
 		    txFrame.CmdType = 2;
@@ -133,7 +133,7 @@ int main(void)
 		    txFrame.DataLen = 5;
 
 		    AppliSendBuff(&txFrame, txFrame.DataLen);
-
+		    HAL_UART_Transmit(&huart1, "Sending\n", 8, 1000);
 
 			/* USER CODE END WHILE */
 
@@ -147,7 +147,8 @@ int main(void)
 
 		  uint8_t cRxlen = 0;
 	      AppliReceiveBuff(aReceiveBuffer, cRxlen);
-		  HAL_Delay(2000);
+
+		  HAL_Delay(20);
 
 	  }
   }
