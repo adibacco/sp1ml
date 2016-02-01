@@ -654,20 +654,20 @@ void Exit_LP_mode(void)
 * @param  None
 * @retval None
 */
-#if 0
+
+
 void MCU_Enter_StopMode(void)
 {
 
-	  HAL_SuspendTick();
-	  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-	  while((PWR->CSR & (uint32_t) 0x00000001)!=0);//attesa che il WUF si azzeri (via HW)
+  HAL_SuspendTick();
+  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+  while((PWR->CSR & (uint32_t) 0x00000001)!=0);//attesa che il WUF si azzeri (via HW)
 
-	  HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFE);  /* Infinite loop */
+  HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFE);  /* Infinite loop */
 
-	  HAL_ResumeTick();
-
+  HAL_ResumeTick();
 }
-#endif
+
 /**
 * @brief  This routine puts the MCU in standby mode
 * @param  None
@@ -731,8 +731,9 @@ void RadioPowerOFF(void)
 */
 void RadioStandBy(void)
 {
+
   SpiritCmdStrobeStandby();  
-#if 0  
+#if 1
   do{
     /* Delay for state transition */
     for(volatile uint8_t i=0; i!=0xFF; i++);

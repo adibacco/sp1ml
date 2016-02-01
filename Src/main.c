@@ -71,18 +71,6 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 
-void MCU_Enter_StopMode(void)
-{
-
-  HAL_SuspendTick();
-  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-  while((PWR->CSR & (uint32_t) 0x00000001)!=0);//attesa che il WUF si azzeri (via HW)
-
-  HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFE);  /* Infinite loop */
-
-  HAL_ResumeTick();
-}
-
 /* USER CODE END 0 */
 
 int main(void)
@@ -128,15 +116,13 @@ int main(void)
 
 			}
 
-			__HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-			while ((PWR->CSR & (uint32_t) 0x00000001) != 0)
-				;
 
 			HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 8192, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
 
 			// Uncomment to enable wake up from pin
 			//HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);
-			MCU_Enter_StopMode();
+			Enter_LP_mode();
+			Exit_LP_mode();
 
 			AppliFrame_t txFrame;
 		    txFrame.Cmd = 1;
