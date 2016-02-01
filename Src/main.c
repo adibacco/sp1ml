@@ -118,7 +118,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  if (mode == RX_MODE) {
+  if (mode == TX_MODE) {
 		while (1) {
 			for (int i = 0; i < 4; i++) {
 				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);

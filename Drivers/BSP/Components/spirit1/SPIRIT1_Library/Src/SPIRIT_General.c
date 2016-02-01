@@ -419,15 +419,18 @@ void SpiritGeneralSetSpiritVersion(SpiritVersion xSpiritVersion)
 
 }
 
+
+
 /**
  * @brief  Returns SPIRIT RF board version.
  * @param  None.
- * @retval SPIRIT RF board version.
+ * @retval SPIRIT RF board version: 0x30 is the only admitted value
  */
 SpiritVersion SpiritGeneralGetSpiritVersion(void)
 {
-  return s_xSpiritVersion;
-
+  uint8_t ver;
+  SpiritSpiReadRegisters(DEVICE_INFO0_VERSION, 1, &ver);
+  return ver;
 }
 
 /**

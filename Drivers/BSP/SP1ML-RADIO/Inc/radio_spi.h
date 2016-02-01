@@ -139,8 +139,7 @@ extern "C" {
   
   
 /* Exported functions ------------------------------------------------------- */ 
- void MX_SPI1_Init_NOMX();
-
+void RadioSpiInit(void);
 //static uint32_t SPI_Read(uint8_t writevalue);
 //static void SPI_Write(uint8_t Value);
 //static void SPI_Error(void);

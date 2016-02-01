@@ -49,6 +49,7 @@ by the user
 #include "usart.h"
 #include "spirit1_appli.h"
 #include "MCU_Interface.h"
+#include "radio_gpio.h"
 
 /** @addtogroup USER
 * @{
@@ -111,7 +112,7 @@ RadioLowPowerMode_t Radio_LPM_cb =
 * @brief GPIO structure fitting
 */
 SGpioInit xGpioIRQ={
-  SPIRIT_GPIO_3,
+  SPIRIT_GPIO_IRQ,
   SPIRIT_GPIO_MODE_DIGITAL_OUTPUT_LP,
   SPIRIT_GPIO_DIG_OUT_IRQ
 };

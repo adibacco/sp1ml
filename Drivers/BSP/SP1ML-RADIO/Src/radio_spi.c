@@ -38,7 +38,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "radio_spi.h"
-
+#include "spi.h"
 /**
  * @addtogroup BSP
  * @{
@@ -85,7 +85,6 @@
  * @defgroup RADIO_SPI_Private_Variables              RADIO_SPI Private Variables
  * @{
  */
-SPI_HandleTypeDef pSpiHandle;
 uint32_t SpiTimeout = RADIO_SPI_TIMEOUT_MAX;                         /*<! Value of Timeout when SPI communication fails */
 
 /**
@@ -97,9 +96,13 @@ uint32_t SpiTimeout = RADIO_SPI_TIMEOUT_MAX;                         /*<! Value 
  * @defgroup RADIO_SPI_Private_FunctionPrototypes     RADIO_SPI Private Function Prototypes
  * @{
  */
+
+#if 0
 void RadioSpiInit(void);
-void HAL_SPI_MspInit(SPI_HandleTypeDef* pSpiHandle);
-/* void HAL_SPI_MspDeInit(SPI_HandleTypeDef* pSpiHandle); */
+
+void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi1);
+#endif
+/* void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi1); */
 static void SPI_Write(uint8_t Value);
 static void SPI_Error(void);
 StatusBytes RadioSpiWriteRegisters(uint8_t cRegAddress, uint8_t cNbBytes, uint8_t* pcBuffer);
@@ -118,7 +121,7 @@ StatusBytes RadioSpiReadFifo(uint8_t cNbBytes, uint8_t* pcBuffer);
  * @{
  */
 
-
+#if 0
 /**
   * @brief  Initializes SPI HAL.
   * @param  None
@@ -126,38 +129,38 @@ StatusBytes RadioSpiReadFifo(uint8_t cNbBytes, uint8_t* pcBuffer);
   */
 void RadioSpiInit(void)
 {
-  if (HAL_SPI_GetState(&pSpiHandle) == HAL_SPI_STATE_RESET)
+  if (HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_RESET)
   {
     /* SPI Config */
-    pSpiHandle.Instance               = RADIO_SPI;
-    pSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
-    pSpiHandle.Init.Direction         = SPI_DIRECTION_2LINES;
-    pSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;
-    pSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW;
-    pSpiHandle.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLED;
-    pSpiHandle.Init.CRCPolynomial     = 7;
-    pSpiHandle.Init.DataSize          = SPI_DATASIZE_8BIT;
-    pSpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
-    pSpiHandle.Init.NSS               = SPI_NSS_HARD_OUTPUT;       
-    pSpiHandle.Init.TIMode            = SPI_TIMODE_DISABLED;
-    pSpiHandle.Init.Mode              = SPI_MODE_MASTER;
+    hspi1.Instance               = RADIO_SPI;
+    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+    hspi1.Init.Direction         = SPI_DIRECTION_2LINES;
+    hspi1.Init.CLKPhase          = SPI_PHASE_1EDGE;
+    hspi1.Init.CLKPolarity       = SPI_POLARITY_LOW;
+    hspi1.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLED;
+    hspi1.Init.CRCPolynomial     = 7;
+    hspi1.Init.DataSize          = SPI_DATASIZE_8BIT;
+    hspi1.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+    hspi1.Init.NSS               = SPI_NSS_HARD_OUTPUT;
+    hspi1.Init.TIMode            = SPI_TIMODE_DISABLED;
+    hspi1.Init.Mode              = SPI_MODE_MASTER;
 
-    HAL_SPI_MspInit(&pSpiHandle);
-    HAL_SPI_Init(&pSpiHandle);
+    HAL_SPI_MspInit(&hspi1);
+    HAL_SPI_Init(&hspi1);
   }
 }
 
 
 /**
   * @brief  Initializes SPI MSP.
-  * @param  SPI_HandleTypeDef* pSpiHandle
+  * @param  SPI_HandleTypeDef* hspi1
   * @retval None
   */
-void HAL_SPI_MspInit(SPI_HandleTypeDef* pSpiHandle)
+void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi1)
 {
   
   GPIO_InitTypeDef GPIO_InitStruct;
-  if (pSpiHandle->Instance==RADIO_SPI)
+  if (hspi1->Instance==RADIO_SPI)
   {
   /*** Configure the GPIOs ***/  
   /* Enable GPIO clock */
@@ -198,7 +201,8 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* pSpiHandle)
     RADIO_SPI_CLK_ENABLE();
   }
 }
- 
+#endif
+
 /**
 * @}
 */
@@ -213,8 +217,8 @@ static void SPI_Write(uint8_t Value)
 {
   HAL_StatusTypeDef status = HAL_OK;
   
- while (__HAL_SPI_GET_FLAG(&pSpiHandle, SPI_FLAG_TXE) == RESET);
-  status = HAL_SPI_Transmit(&pSpiHandle, (uint8_t*) &Value, 1, SpiTimeout);
+ while (__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE) == RESET);
+  status = HAL_SPI_Transmit(&hspi1, (uint8_t*) &Value, 1, SpiTimeout);
     
   /* Check the communication status */
   if (status != HAL_OK)
@@ -232,11 +236,7 @@ static void SPI_Write(uint8_t Value)
   */
 static void SPI_Error(void)
 {
-  /* De-initialize the SPI communication BUS */
-  HAL_SPI_DeInit(&pSpiHandle);
-  
-  /* Re-Initiaize the SPI communication BUS */
-  RadioSpiInit();
+
 }
 
 
@@ -266,11 +266,11 @@ StatusBytes RadioSpiWriteRegisters(uint8_t cRegAddress, uint8_t cNbBytes, uint8_
   for (volatile uint16_t Index = 0; Index < CS_TO_SCLK_DELAY; Index++);
     
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[0], (uint8_t *)&(tmpstatus), 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[0], (uint8_t *)&(tmpstatus), 1, SpiTimeout);
   tmpstatus = tmpstatus << 8;  
   
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
         
   /* Writes the registers according to the number of bytes */
   for (int index = 0; index < cNbBytes; index++)
@@ -279,7 +279,7 @@ StatusBytes RadioSpiWriteRegisters(uint8_t cRegAddress, uint8_t cNbBytes, uint8_
   }
   
   /* To be sure to don't rise the Chip Select before the end of last sending */
-   while (__HAL_SPI_GET_FLAG(&pSpiHandle, SPI_FLAG_TXE) == RESET);
+   while (__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE) == RESET);
   /* Puts the SPI chip select high to end the transaction */
   RadioSpiCSHigh();
   
@@ -317,19 +317,19 @@ StatusBytes RadioSpiReadRegisters(uint8_t cRegAddress, uint8_t cNbBytes, uint8_t
   for (volatile uint16_t Index = 0; Index < CS_TO_SCLK_DELAY; Index++);
 
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[0], (uint8_t *)&(tmpstatus), 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[0], (uint8_t *)&(tmpstatus), 1, SpiTimeout);
   tmpstatus = tmpstatus << 8;  
   
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
  
   for (int index = 0; index < cNbBytes; index++)
   { 
-    HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&dummy, (uint8_t *)&(pcBuffer)[index], 1, SpiTimeout);
+    HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&dummy, (uint8_t *)&(pcBuffer)[index], 1, SpiTimeout);
   } 
 
   /* To be sure to don't rise the Chip Select before the end of last sending */
-  while (__HAL_SPI_GET_FLAG(&pSpiHandle, SPI_FLAG_TXE) == RESET);
+  while (__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE) == RESET);
   
   /* Put the SPI chip select high to end the transaction */
   RadioSpiCSHigh();
@@ -364,14 +364,14 @@ StatusBytes RadioSpiCommandStrobes(uint8_t cCommandCode)
   
   for (volatile uint16_t Index = 0; Index < CS_TO_SCLK_DELAY; Index++);
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[0], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[0], (uint8_t *)&tmpstatus, 1, SpiTimeout);
   tmpstatus = tmpstatus<<8;  
 
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
 
   /* To be sure to don't rise the Chip Select before the end of last sending */
-  while (__HAL_SPI_GET_FLAG(&pSpiHandle, SPI_FLAG_TXE) == RESET);
+  while (__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE) == RESET);
 
   /* Puts the SPI chip select high to end the transaction */
   RadioSpiCSHigh();
@@ -408,11 +408,11 @@ StatusBytes RadioSpiWriteFifo(uint8_t cNbBytes, uint8_t* pcBuffer)
   for (volatile uint16_t Index = 0; Index < CS_TO_SCLK_DELAY; Index++);
 
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[0], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[0], (uint8_t *)&tmpstatus, 1, SpiTimeout);
   tmpstatus = tmpstatus<<8;  
   
     /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
 
     /* Writes the registers according to the number of bytes */
   for (int index = 0; index < cNbBytes; index++)
@@ -421,7 +421,7 @@ StatusBytes RadioSpiWriteFifo(uint8_t cNbBytes, uint8_t* pcBuffer)
   }
  
   /* To be sure to don't rise the Chip Select before the end of last sending */
-  while (__HAL_SPI_GET_FLAG(&pSpiHandle, SPI_FLAG_TXE) == RESET); 
+  while (__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE) == RESET);
   
   /* Put the SPI chip select high to end the transaction */
   RadioSpiCSHigh();
@@ -457,19 +457,19 @@ StatusBytes RadioSpiReadFifo(uint8_t cNbBytes, uint8_t* pcBuffer)
   for (volatile uint16_t Index = 0; Index < CS_TO_SCLK_DELAY; Index++);
 
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[0], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[0], (uint8_t *)&tmpstatus, 1, SpiTimeout);
   tmpstatus = tmpstatus<<8;  
   
     /* Write the aHeader bytes and read the SPIRIT1 status bytes */
-  HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&aHeader[1], (uint8_t *)&tmpstatus, 1, SpiTimeout);
 
   for (int index = 0; index < cNbBytes; index++)
   { 
-    HAL_SPI_TransmitReceive(&pSpiHandle, (uint8_t *)&dummy, (uint8_t *)&pcBuffer[index], 1, SpiTimeout);
+    HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&dummy, (uint8_t *)&pcBuffer[index], 1, SpiTimeout);
   } 
   
   /* To be sure to don't rise the Chip Select before the end of last sending */
-  while(__HAL_SPI_GET_FLAG(&pSpiHandle, SPI_FLAG_TXE) == RESET);
+  while(__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE) == RESET);
     
   /* Put the SPI chip select high to end the transaction */
   RadioSpiCSHigh();

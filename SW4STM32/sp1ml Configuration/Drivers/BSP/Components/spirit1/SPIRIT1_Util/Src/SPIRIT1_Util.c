@@ -527,8 +527,7 @@ void Spirit1SetRxTimeout(float cRxTimeOut)
     /* RX timeout config */
     SpiritTimerSetRxTimeoutMs(cRxTimeOut);
     Spirit1EnableSQI();
-    SpiritTimerSetRxTimeoutStopCondition(NO_TIMEOUT_STOP);
-  }
+    SpiritTimerSetRxTimeoutStopCondition(RSSI_AND_SQI_ABOVE_THRESHOLD);  }
 }
 
 /**
@@ -617,7 +616,7 @@ void Spirit1StartTx(uint8_t *buffer, uint8_t size )
   
   /* send the TX command */
   SpiritCmdStrobeTx();
-#if 0
+#if 1
       do{
     /* Delay for state transition */
     for(volatile uint8_t i=0; i!=0xFF; i++);

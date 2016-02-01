@@ -201,6 +201,8 @@ RadioGpioPin;
 #define RADIO_GPIO_SDN_SPEED                       GPIO_SPEED_HIGH
 #define RADIO_GPIO_SDN_PUPD                        GPIO_PULLUP
 
+#define SPIRIT_GPIO_IRQ         SPIRIT_GPIO_0
+
 
 /* Exported Variables ------------------------------------------------------------*/
   

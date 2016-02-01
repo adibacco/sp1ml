@@ -96,9 +96,13 @@ uint32_t SpiTimeout = RADIO_SPI_TIMEOUT_MAX;                         /*<! Value 
  * @defgroup RADIO_SPI_Private_FunctionPrototypes     RADIO_SPI Private Function Prototypes
  * @{
  */
-void MX_SPI1_Init_NOMX(void);
-void HAL_SPI_MspInit_NOMX(SPI_HandleTypeDef* pSpiHandle);
-/* void HAL_SPI_MspDeInit(SPI_HandleTypeDef* pSpiHandle); */
+
+#if 0
+void RadioSpiInit(void);
+
+void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi1);
+#endif
+/* void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi1); */
 static void SPI_Write(uint8_t Value);
 static void SPI_Error(void);
 StatusBytes RadioSpiWriteRegisters(uint8_t cRegAddress, uint8_t cNbBytes, uint8_t* pcBuffer);
@@ -117,87 +121,87 @@ StatusBytes RadioSpiReadFifo(uint8_t cNbBytes, uint8_t* pcBuffer);
  * @{
  */
 
+#if 0
 /**
   * @brief  Initializes SPI HAL.
   * @param  None
   * @retval None
   */
-//void MX_SPI1_Init_NOMX(void)
-//{
-//  if (HAL_SPI_GetState(&pSpiHandle) == HAL_SPI_STATE_RESET)
-//  {
-//    /* SPI Config */
-//    pSpiHandle.Instance               = RADIO_SPI;
-//    pSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
-//    pSpiHandle.Init.Direction         = SPI_DIRECTION_2LINES;
-//    pSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;
-//    pSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW;
-//    pSpiHandle.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLED;
-//    pSpiHandle.Init.CRCPolynomial     = 7;
-//    pSpiHandle.Init.DataSize          = SPI_DATASIZE_8BIT;
-//    pSpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
-//    pSpiHandle.Init.NSS               = SPI_NSS_HARD_OUTPUT;
-//    pSpiHandle.Init.TIMode            = SPI_TIMODE_DISABLED;
-//    pSpiHandle.Init.Mode              = SPI_MODE_MASTER;
-//
-//    //HAL_SPI_MspInit_NOMX(&pSpiHandle);
-//
-//    HAL_SPI_Init(&pSpiHandle);
-//
-//  }
-//}
+void RadioSpiInit(void)
+{
+  if (HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_RESET)
+  {
+    /* SPI Config */
+    hspi1.Instance               = RADIO_SPI;
+    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+    hspi1.Init.Direction         = SPI_DIRECTION_2LINES;
+    hspi1.Init.CLKPhase          = SPI_PHASE_1EDGE;
+    hspi1.Init.CLKPolarity       = SPI_POLARITY_LOW;
+    hspi1.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLED;
+    hspi1.Init.CRCPolynomial     = 7;
+    hspi1.Init.DataSize          = SPI_DATASIZE_8BIT;
+    hspi1.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+    hspi1.Init.NSS               = SPI_NSS_HARD_OUTPUT;
+    hspi1.Init.TIMode            = SPI_TIMODE_DISABLED;
+    hspi1.Init.Mode              = SPI_MODE_MASTER;
+
+    HAL_SPI_MspInit(&hspi1);
+    HAL_SPI_Init(&hspi1);
+  }
+}
 
 
 /**
   * @brief  Initializes SPI MSP.
-  * @param  SPI_HandleTypeDef* pSpiHandle
+  * @param  SPI_HandleTypeDef* hspi1
   * @retval None
   */
-//void HAL_SPI_MspInit_NOMX(SPI_HandleTypeDef* pSpiHandle)
-//{
-//
-//  GPIO_InitTypeDef GPIO_InitStruct;
-//  if (pSpiHandle->Instance==RADIO_SPI)
-//  {
-//  /*** Configure the GPIOs ***/
-//  /* Enable GPIO clock */
-//    RADIO_SPI_SCK_CLOCK_ENABLE();
-//    RADIO_SPI_MISO_CLOCK_ENABLE();
-//    RADIO_SPI_MOSI_CLOCK_ENABLE();
-//
-//    /**SPI1 GPIO Configuration */
-//
-//    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-//    GPIO_InitStruct.Pull = GPIO_PULLUP;
-//    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-//    GPIO_InitStruct.Alternate = NUCLEO_SPIx_SCK_AF;
-//
-//    GPIO_InitStruct.Pin = RADIO_SPI_SCK_PIN;
-//    HAL_GPIO_Init(RADIO_SPI_SCK_PORT, &GPIO_InitStruct);
-//
-//    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-//    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-//    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-//    GPIO_InitStruct.Alternate = NUCLEO_SPIx_MISO_MOSI_AF;
-//
-//    GPIO_InitStruct.Pin = RADIO_SPI_MISO_PIN;
-//    HAL_GPIO_Init(RADIO_SPI_MISO_PORT, &GPIO_InitStruct);
-//
-//    GPIO_InitStruct.Pin = RADIO_SPI_MOSI_PIN;
-//    HAL_GPIO_Init(RADIO_SPI_MOSI_PORT, &GPIO_InitStruct);
-//
-//    RADIO_SPI_CS_CLOCK_ENABLE();
-//
-//    /* Configure SPI pin: CS */
-//    GPIO_InitStruct.Pin = RADIO_SPI_CS_PIN;
-//    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-//    GPIO_InitStruct.Pull = GPIO_PULLUP;
-//    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-//    HAL_GPIO_Init(RADIO_SPI_CS_PORT, &GPIO_InitStruct);
-//
-//    RADIO_SPI_CLK_ENABLE();
-//  }
-//}
+void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi1)
+{
+  
+  GPIO_InitTypeDef GPIO_InitStruct;
+  if (hspi1->Instance==RADIO_SPI)
+  {
+  /*** Configure the GPIOs ***/  
+  /* Enable GPIO clock */
+    RADIO_SPI_SCK_CLOCK_ENABLE();
+    RADIO_SPI_MISO_CLOCK_ENABLE();
+    RADIO_SPI_MOSI_CLOCK_ENABLE();
+         
+    /**SPI1 GPIO Configuration */   
+
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Alternate = NUCLEO_SPIx_SCK_AF;
+    
+    GPIO_InitStruct.Pin = RADIO_SPI_SCK_PIN;
+    HAL_GPIO_Init(RADIO_SPI_SCK_PORT, &GPIO_InitStruct);
+    
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Alternate = NUCLEO_SPIx_MISO_MOSI_AF;
+    
+    GPIO_InitStruct.Pin = RADIO_SPI_MISO_PIN;
+    HAL_GPIO_Init(RADIO_SPI_MISO_PORT, &GPIO_InitStruct);
+    
+    GPIO_InitStruct.Pin = RADIO_SPI_MOSI_PIN;
+    HAL_GPIO_Init(RADIO_SPI_MOSI_PORT, &GPIO_InitStruct); 
+    
+    RADIO_SPI_CS_CLOCK_ENABLE();
+
+    /* Configure SPI pin: CS */
+    GPIO_InitStruct.Pin = RADIO_SPI_CS_PIN;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    HAL_GPIO_Init(RADIO_SPI_CS_PORT, &GPIO_InitStruct);
+    
+    RADIO_SPI_CLK_ENABLE();
+  }
+}
+#endif
 
 /**
 * @}

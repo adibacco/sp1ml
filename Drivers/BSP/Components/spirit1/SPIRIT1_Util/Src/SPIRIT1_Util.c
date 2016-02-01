@@ -115,10 +115,12 @@ static uint8_t s_eeprom = 0;
 */
 void Spirit1InterfaceInit(void)
 { 
+#ifndef USE_CUBE_MX
   /* Initialize the SDN pin micro side */
   RadioGpioInit(RADIO_GPIO_SDN,RADIO_MODE_GPIO_OUT);
 
   SpiritSpiInit();
+#endif
   
 #if defined(SPIRIT1_HAS_EEPROM)
   EepromSpiInitialization();
@@ -133,6 +135,8 @@ void Spirit1InterfaceInit(void)
   /* Initialize the signals to drive the range extender application board */
   SpiritManagementRangeExtInit(); 
   
+  SpiritVersion ver = SpiritGeneralGetSpiritVersion();
+
   /* Micro EXTI config */      
   RadioGpioInit(RADIO_GPIO_3,RADIO_MODE_EXTI_IN);
   RadioGpioInterruptCmd(RADIO_GPIO_3,0x04,0x04,DISABLE); 
@@ -612,7 +616,7 @@ void Spirit1StartTx(uint8_t *buffer, uint8_t size )
   
   /* send the TX command */
   SpiritCmdStrobeTx();
-#if 0
+#if 1
       do{
     /* Delay for state transition */
     for(volatile uint8_t i=0; i!=0xFF; i++);
