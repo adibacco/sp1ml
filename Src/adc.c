@@ -1,7 +1,8 @@
 /**
   ******************************************************************************
-  * @file    stm32l1xx_it.c
-  * @brief   Interrupt Service Routines.
+  * File Name          : ADC.c
+  * Description        : This file provides code for the configuration
+  *                      of the ADC instances.
   ******************************************************************************
   *
   * COPYRIGHT(c) 2016 STMicroelectronics
@@ -30,67 +31,91 @@
   *
   ******************************************************************************
   */
+
 /* Includes ------------------------------------------------------------------*/
-#include "stm32l1xx_hal.h"
-#include "stm32l1xx.h"
-#include "stm32l1xx_it.h"
+#include "adc.h"
 
 /* USER CODE BEGIN 0 */
-#include "radio_gpio.h"
+
 /* USER CODE END 0 */
 
-/* External variables --------------------------------------------------------*/
-extern RTC_HandleTypeDef hrtc;
+ADC_HandleTypeDef hadc;
 
-/******************************************************************************/
-/*            Cortex-M3 Processor Interruption and Exception Handlers         */ 
-/******************************************************************************/
-
-/**
-* @brief This function handles System tick timer.
-*/
-void SysTick_Handler(void)
+/* ADC init function */
+void MX_ADC_Init(void)
 {
-  /* USER CODE BEGIN SysTick_IRQn 0 */
+  ADC_ChannelConfTypeDef sConfig;
 
-  /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
-  HAL_SYSTICK_IRQHandler();
-  /* USER CODE BEGIN SysTick_IRQn 1 */
+    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
+    */
+  hadc.Instance = ADC1;
+  hadc.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc.Init.Resolution = ADC_RESOLUTION12b;
+  hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc.Init.EOCSelection = EOC_SEQ_CONV;
+  hadc.Init.LowPowerAutoWait = ADC_AUTOWAIT_DISABLE;
+  hadc.Init.LowPowerAutoPowerOff = ADC_AUTOPOWEROFF_DISABLE;
+  hadc.Init.ChannelsBank = ADC_CHANNELS_BANK_A;
+  hadc.Init.ContinuousConvMode = DISABLE;
+  hadc.Init.NbrOfConversion = 1;
+  hadc.Init.DiscontinuousConvMode = DISABLE;
+  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc.Init.DMAContinuousRequests = DISABLE;
+  HAL_ADC_Init(&hadc);
 
-  /* USER CODE END SysTick_IRQn 1 */
+    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+    */
+  sConfig.Channel = ADC_CHANNEL_VREFINT;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_4CYCLES;
+  HAL_ADC_ConfigChannel(&hadc, &sConfig);
+
 }
 
-/******************************************************************************/
-/* STM32L1xx Peripheral Interrupt Handlers                                    */
-/* Add here the Interrupt Handlers for the used peripherals.                  */
-/* For the available peripheral interrupt handler names,                      */
-/* please refer to the startup file (startup_stm32l1xx.s).                    */
-/******************************************************************************/
-
-/**
-* @brief This function handles RTC wake-up interrupt through EXTI line 20.
-*/
-void RTC_WKUP_IRQHandler(void)
+void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
-  /* USER CODE BEGIN RTC_WKUP_IRQn 0 */
 
-  /* USER CODE END RTC_WKUP_IRQn 0 */
-  HAL_RTCEx_WakeUpTimerIRQHandler(&hrtc);
-  /* USER CODE BEGIN RTC_WKUP_IRQn 1 */
+  if(hadc->Instance==ADC1)
+  {
+  /* USER CODE BEGIN ADC1_MspInit 0 */
 
-  /* USER CODE END RTC_WKUP_IRQn 1 */
+  /* USER CODE END ADC1_MspInit 0 */
+    /* Peripheral clock enable */
+    __ADC1_CLK_ENABLE();
+  /* USER CODE BEGIN ADC1_MspInit 1 */
+
+  /* USER CODE END ADC1_MspInit 1 */
+  }
 }
+
+void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
+{
+
+  if(hadc->Instance==ADC1)
+  {
+  /* USER CODE BEGIN ADC1_MspDeInit 0 */
+
+  /* USER CODE END ADC1_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __ADC1_CLK_DISABLE();
+  }
+  /* USER CODE BEGIN ADC1_MspDeInit 1 */
+
+  /* USER CODE END ADC1_MspDeInit 1 */
+} 
 
 /* USER CODE BEGIN 1 */
-void EXTI4_IRQHandler(void)
-{
-	  if(__HAL_GPIO_EXTI_GET_IT(RADIO_GPIO_3_EXTI_LINE) != RESET)
-	  {
-	    __HAL_GPIO_EXTI_CLEAR_IT(RADIO_GPIO_3_EXTI_LINE);
 
-	    P2PInterruptHandler();
-	  }
-}
 /* USER CODE END 1 */
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

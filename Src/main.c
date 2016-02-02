@@ -32,14 +32,16 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l1xx_hal.h"
+#include "adc.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
-#include "spirit1_appli.h"
 
 /* USER CODE BEGIN Includes */
+#include "spirit1_appli.h"
+
 #define TX_BUFFER_SIZE   20
 #define RX_BUFFER_SIZE   96
 #define RX_MODE 0
@@ -48,16 +50,15 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+
+/* USER CODE BEGIN PV */
+/* Private variables ---------------------------------------------------------*/
 uint8_t TxLength = TX_BUFFER_SIZE;
 uint8_t RxLength = 0;
 uint8_t aTransmitBuffer[TX_BUFFER_SIZE] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,\
                                                                 16,17,18,19,20};
 uint8_t aReceiveBuffer[RX_BUFFER_SIZE] = {0x00};
 uint8_t mode = TX_MODE;
-
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,6 +91,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_ADC_Init();
   MX_I2C1_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
@@ -109,7 +111,7 @@ int main(void)
 
   if (mode == TX_MODE) {
 		while (1) {
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < 2; i++) {
 				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
 				HAL_Delay(50);
 				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
@@ -135,9 +137,9 @@ int main(void)
 		    AppliSendBuff(&txFrame, txFrame.DataLen);
 		    HAL_UART_Transmit(&huart1, "Sending\n", 8, 1000);
 
-			/* USER CODE END WHILE */
+  /* USER CODE END WHILE */
 
-			/* USER CODE BEGIN 3 */
+  /* USER CODE BEGIN 3 */
 
 		}
   }
@@ -169,7 +171,10 @@ void SystemClock_Config(void)
 
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI
+                              |RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = 16;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
