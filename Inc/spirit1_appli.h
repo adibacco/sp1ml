@@ -117,7 +117,7 @@
 #define POWER_INDEX                 7
 #define RECEIVE_TIMEOUT             2000.0 /*change the value for required timeout period*/   
 
-#define RSSI_THRESHOLD              -120
+#define RSSI_THRESHOLD              -130
 
 /*  Packet configuration parameters  */
 #define PREAMBLE_LENGTH             PKT_PREAMBLE_LENGTH_04BYTES
@@ -176,11 +176,13 @@ typedef struct sRadioDriver
     void ( *DisableIrq )(void);
     void ( *SetRxTimeout )( float cRxTimeout );
     void ( *EnableSQI )(void);
+    void ( *EnablePQI )(void);
     void ( *SetRssiThreshold)(int dbmValue);
     void ( *ClearIrqStatus )(void);
     void ( *StartRx )( void );
     void ( *StartTx )( uint8_t *buffer, uint8_t size ); 
     void ( *GetRxPacket )( uint8_t *buffer, uint8_t *size );
+    void ( *ConfigureRCO )(int status);
 }RadioDriver_t;   
 
 typedef struct sMCULowPowerMode

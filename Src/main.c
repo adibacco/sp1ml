@@ -32,7 +32,6 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l1xx_hal.h"
-#include "adc.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
@@ -59,6 +58,24 @@ uint8_t aTransmitBuffer[TX_BUFFER_SIZE] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,\
                                                                 16,17,18,19,20};
 uint8_t aReceiveBuffer[RX_BUFFER_SIZE] = {0x00};
 uint8_t mode = TX_MODE;
+
+uint8_t regs[] = {
+           0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+	       0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0xff, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+   	       0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   	       0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+   	       0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+   	       0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		   0xff, 0xff, 0xff, 0xff, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0X6c, 0x6d, 0x6e, 0x6f,
+   	       0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
+   	       0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
+		   0x90, 0x91, 0x92, 0x93, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x9e, 0x9f,
+		   0xff, 0xa1, 0xff, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		   0xff, 0xff, 0xb2, 0xff, 0xb4, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+
+		};
+char message[64];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,7 +88,22 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN 0 */
 
+void dump_regs()
+{
+	  /* Dump registers */
+	  uint8_t val;
+	  char buf[8];
 
+	  for (int r = 0; r < 12*16; r++) {
+		  if (regs[r] != 0xff) {
+			  val = 0xff;
+			  RadioSpiReadRegisters(regs[r], 1, &val);
+			  sprintf(buf, "%02x=%02x\r\n", regs[r], val);
+			  HAL_UART_Transmit(&huart1, buf, 7, 1000);
+		  }
+	  }
+
+}
 /* USER CODE END 0 */
 
 int main(void)
@@ -91,7 +123,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC_Init();
   MX_I2C1_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
@@ -102,12 +133,28 @@ int main(void)
 
   HAL_Spirit1_Init();
   P2P_Init();
+  uint8_t aux;
+  aux = 0x03;
+  SpiritSpiWriteRegisters(0x10, 1, &aux);
+  aux = 0x01;
+  SpiritSpiWriteRegisters(0x17, 1, &aux);
+  aux = 0x00;
+  SpiritSpiWriteRegisters(0x18, 1, &aux);
+  uint8_t levels;
+  float pa[] = { 10.5, -24.0, -16.7, -11.8, -5.5, -1.3,  3.7, 10.5 };
+//  SpiritRadioSetPATabledBm(0, 1, LOAD_0_PF, pa);
+//  SpiritRadioGetPATabledBm(&levels, pa);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
+
+  HAL_Delay(30000);
+  RadioStandBy();
+  HAL_Delay(30000);
+  MCU_Enter_StandbyMode();
 
   if (mode == TX_MODE) {
 		while (1) {
@@ -119,7 +166,7 @@ int main(void)
 
 			}
 
-			HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 16384, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+			HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 32768, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
 
 			// Uncomment to enable wake up from pin
 			//HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);
@@ -135,13 +182,14 @@ int main(void)
 		    txFrame.DataLen = 5;
 
 		    AppliSendBuff(&txFrame, txFrame.DataLen);
-		    HAL_UART_Transmit(&huart1, "Sending\n", 8, 1000);
+		    HAL_UART_Transmit(&huart1, "Sent\n", 8, 1000);
 
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 
 		}
+
   }
   else
   {
@@ -149,8 +197,7 @@ int main(void)
 
 		  uint8_t cRxlen = 0;
 	      AppliReceiveBuff(aReceiveBuffer, cRxlen);
-
-		  HAL_Delay(20);
+		  HAL_Delay(5);
 
 	  }
   }
@@ -171,10 +218,7 @@ void SystemClock_Config(void)
 
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI
-                              |RCC_OSCILLATORTYPE_MSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;

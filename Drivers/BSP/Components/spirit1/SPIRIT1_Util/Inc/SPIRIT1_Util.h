@@ -86,6 +86,7 @@ void Spirit1EnableRxIrq(void);
 void Spirit1DisableIrq(void);
 void Spirit1SetRxTimeout(float cRxTimeOut);
 void Spirit1EnableSQI(void);
+void Spirit1EnablePQI(void);
 void Spirit1SetRssiTH(int dbmValue);
 float Spirit1GetRssiTH(void);
 void Spirit1ClearIRQ(void);

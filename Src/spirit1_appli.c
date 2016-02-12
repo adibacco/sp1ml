@@ -80,11 +80,14 @@ RadioDriver_t spirit_cb =
   .DisableIrq = Spirit1DisableIrq,
   .SetRxTimeout = Spirit1SetRxTimeout,
   .EnableSQI = Spirit1EnableSQI,
+  .EnablePQI = Spirit1EnablePQI,
   .SetRssiThreshold = Spirit1SetRssiTH,
   .ClearIrqStatus = Spirit1ClearIRQ,
   .StartRx = Spirit1StartRx,
   .StartTx = Spirit1StartTx,
-  .GetRxPacket = Spirit1GetRxPacket
+  .GetRxPacket = Spirit1GetRxPacket,
+  .ConfigureRCO = SpiritCalibrationRco
+
 };
 
 /**
@@ -211,7 +214,7 @@ MCULowPowerMode_t *pMCU_LPM_Comm;
 RadioLowPowerMode_t  *pRadio_LPM_Comm;
 /*Flags declarations*/
 volatile FlagStatus xRxDoneFlag = RESET, xTxDoneFlag=RESET, cmdFlag=RESET;
-volatile FlagStatus xStartRx=RESET, rx_timeout=RESET, exitTime=RESET, rx_error=RESET;
+volatile FlagStatus xStartRx=RESET, rx_timeout=RESET, exitTime=RESET, spirit_error=RESET;
 volatile FlagStatus datasendFlag=RESET, wakeupFlag=RESET;
 volatile FlagStatus PushButtonStatusWakeup=RESET;
 volatile FlagStatus PushButtonStatusData=RESET;
@@ -224,6 +227,8 @@ uint16_t exitCounter = 0;
 uint16_t txCounter = 0;
 uint16_t wakeupCounter = 0;
 uint16_t dataSendCounter = 0x00;
+
+char message[32];
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -447,8 +452,9 @@ void AppliReceiveBuff(uint8_t *RxFrameBuff, uint8_t cRxlen)
   /* RX command */
   pRadioDriver->StartRx();      
     
+  uint32_t timeout = HAL_GetTick() + 5000;
   /* wait for data received or timeout period occured */
-  while((RESET == xRxDoneFlag)&&(RESET == rx_timeout));
+  while((RESET == xRxDoneFlag)&&(RESET == rx_timeout)&&(RESET == spirit_error) && (HAL_GetTick () < timeout));
   
 
   if(rx_timeout==SET)
@@ -459,12 +465,14 @@ void AppliReceiveBuff(uint8_t *RxFrameBuff, uint8_t cRxlen)
   }
   else if(xRxDoneFlag) 
   {
-
     xRxDoneFlag=RESET;
 
-    pRadioDriver->GetRxPacket(RxFrameBuff,&cRxlen); 
+    pRadioDriver->GetRxPacket(RxFrameBuff,&cRxlen);
+	int dbmValue= SpiritQiGetRssidBm();
+	sprintf(message, "R %d ", dbmValue);
+
     /*rRSSIValue = Spirit1GetRssiTH();*/
-    HAL_UART_Transmit(&huart1, "Received\n", 9, 1000);
+    HAL_UART_Transmit(&huart1, message, strlen(message), 1000);
 
   
     xRxFrame.Cmd = RxFrameBuff[0];
@@ -498,6 +506,10 @@ void AppliReceiveBuff(uint8_t *RxFrameBuff, uint8_t cRxlen)
             
     }
   }
+  else if (spirit_error == SET)
+  {
+	  spirit_error = RESET;
+  }
 }
 
 /**
@@ -523,7 +535,10 @@ void P2P_Init(void)
   pRadioDriver->PacketConfig();
   
   pRadioDriver->EnableSQI();
-  
+  pRadioDriver->EnablePQI();
+
+  pRadioDriver->ConfigureRCO(S_ENABLE);
+
   pRadioDriver->SetRssiThreshold(RSSI_THRESHOLD);
 }
 
@@ -784,23 +799,26 @@ void P2PInterruptHandler(void)
   {
     xTxDoneFlag = SET;
   }
-  
   /* Check the SPIRIT RX_DATA_READY IRQ flag */
   else if(xIrqStatus.IRQ_RX_DATA_READY)
   {
     xRxDoneFlag = SET;   
   }
-  
   /* Check the SPIRIT RX_DATA_DISC IRQ flag */
   else if(xIrqStatus.IRQ_RX_DATA_DISC)
   {    
-	rx_error = SET;
     /* RX command - to ensure the device will be ready for the next reception */
     if(xIrqStatus.IRQ_RX_TIMEOUT)
     {
       SpiritCmdStrobeFlushRxFifo();
       rx_timeout = SET; 
     }
+  }
+  else
+  {
+	  spirit_error = SET;
+	  HAL_UART_Transmit(&huart1, ". ", 2, 1000);
+
   }
 }
 

@@ -564,6 +564,20 @@ void Spirit1EnableSQI(void)
   SpiritQiSqiCheck(S_ENABLE);
 }
 
+
+
+/**
+* @brief  this function enables PQI check
+* @param  None
+* @retval None
+*/
+void Spirit1EnablePQI(void)
+{
+  /* enable SQI check */
+  SpiritQiSetPqiThreshold(PQI_TH_0);
+  SpiritQiPqiCheck(S_ENABLE);
+}
+
 /**
 * @brief  this function starts the RX process
 * @param  None
