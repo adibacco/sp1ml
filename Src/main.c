@@ -52,6 +52,8 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+extern volatile SpiritStatus g_xStatus;
+
 uint8_t TxLength = TX_BUFFER_SIZE;
 uint8_t RxLength = 0;
 uint8_t aTransmitBuffer[TX_BUFFER_SIZE] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,\
@@ -84,9 +86,60 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+
+void SystemPower_Config(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure = {0};
+
+  /* Enable Ultra low power mode */
+  HAL_PWREx_EnableUltraLowPower();
+
+  /* Enable the fast wake up from Ultra low power mode */
+  HAL_PWREx_EnableFastWakeUp();
+
+  /* Enable GPIOs clock */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+
+
+  /* Configure all GPIO port pins in Analog Input mode (floating input trigger OFF) */
+  GPIO_InitStructure.Pin = GPIO_PIN_All;
+  GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStructure.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStructure);
+  HAL_GPIO_Init(GPIOH, &GPIO_InitStructure);
+
+  GPIO_InitStructure.Pin = GPIO_PIN_0  |                GPIO_PIN_2  | GPIO_PIN_3  |
+		                   GPIO_PIN_4  | GPIO_PIN_5   | GPIO_PIN_6  | GPIO_PIN_7  |
+						   GPIO_PIN_8  | GPIO_PIN_9   | GPIO_PIN_10 | GPIO_PIN_11 |
+						   GPIO_PIN_12 | GPIO_PIN_13  | GPIO_PIN_14 | GPIO_PIN_15 ;
+  GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStructure.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+
+  /* Disable GPIOs clock */
+  __HAL_RCC_GPIOA_CLK_DISABLE();
+  __HAL_RCC_GPIOB_CLK_DISABLE();
+  __HAL_RCC_GPIOC_CLK_DISABLE();
+  __HAL_RCC_GPIOD_CLK_DISABLE();
+  __HAL_RCC_GPIOE_CLK_DISABLE();
+  __HAL_RCC_GPIOH_CLK_DISABLE();
+
+
+}
 
 void dump_regs()
 {
@@ -140,21 +193,40 @@ int main(void)
   SpiritSpiWriteRegisters(0x17, 1, &aux);
   aux = 0x00;
   SpiritSpiWriteRegisters(0x18, 1, &aux);
-  uint8_t levels;
-  float pa[] = { 10.5, -24.0, -16.7, -11.8, -5.5, -1.3,  3.7, 10.5 };
-//  SpiritRadioSetPATabledBm(0, 1, LOAD_0_PF, pa);
-//  SpiritRadioGetPATabledBm(&levels, pa);
+// uint8_t levels;
+// float pa[] = { 10.5, -24.0, -16.7, -11.8, -5.5, -1.3,  3.7, 10.5 };
+// SpiritRadioSetPATabledBm(0, 1, LOAD_0_PF, pa);
+// SpiritRadioGetPATabledBm(&levels, pa);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO0_Pin, GPIO_PIN_SET);
 
-  HAL_Delay(30000);
-  RadioStandBy();
-  HAL_Delay(30000);
-  MCU_Enter_StandbyMode();
+  HAL_Delay(10000);
+  //RadioStandBy();
+  RadioEnterShutdown();
+  //HAL_GPIO_WritePin(GPIOA, SPIRIT_SDN_Pin, GPIO_PIN_SET);
+
+  HAL_Delay(10000);
+
+  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 32768, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+
+  SystemPower_Config();
+  HAL_Delay(10000);
+
+  MCU_Enter_StopMode();
+  HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
+
+	while (1) {
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+		HAL_Delay(50);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
+		HAL_Delay(50);
+
+	}
 
   if (mode == TX_MODE) {
 		while (1) {
