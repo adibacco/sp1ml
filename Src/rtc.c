@@ -74,7 +74,7 @@ void MX_RTC_Init(void)
 
     /**Enable the WakeUp 
     */
-  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 1024, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 1024, RTC_WAKEUPCLOCK_CK_SPRE_16BITS);
 
 }
 

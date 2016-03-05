@@ -91,6 +91,44 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN 0 */
 
+void Spirit1_Configure() {
+	  HAL_Spirit1_Init();
+	  P2P_Init();
+	  uint8_t aux;
+	  aux = 0x03;
+	  SpiritSpiWriteRegisters(0x10, 1, &aux);
+	  aux = 0x01;
+	  SpiritSpiWriteRegisters(0x17, 1, &aux);
+	  aux = 0x00;
+	  SpiritSpiWriteRegisters(0x18, 1, &aux);
+}
+
+void Configure_GPIO() {
+	  MX_GPIO_Init();
+	  HAL_I2C_MspInit(&hi2c1);
+	  HAL_SPI_MspInit(&hspi1);
+	  HAL_UART_MspInit(&huart1);
+}
+
+void Enter_Low_Power(int wakeUpSecs) {
+
+	  RadioEnterShutdown();
+
+	  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, wakeUpSecs, RTC_WAKEUPCLOCK_CK_SPRE_16BITS);
+
+	  SystemPower_Config();
+
+	  MCU_Enter_StopMode();
+
+}
+
+void Exit_Low_Power() {
+	  HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
+	  Configure_GPIO();
+	  RadioExitShutdown();
+	  Spirit1_Configure();
+
+}
 
 void SystemPower_Config(void)
 {
@@ -184,53 +222,33 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
 
-  HAL_Spirit1_Init();
-  P2P_Init();
-  uint8_t aux;
-  aux = 0x03;
-  SpiritSpiWriteRegisters(0x10, 1, &aux);
-  aux = 0x01;
-  SpiritSpiWriteRegisters(0x17, 1, &aux);
-  aux = 0x00;
-  SpiritSpiWriteRegisters(0x18, 1, &aux);
-// uint8_t levels;
-// float pa[] = { 10.5, -24.0, -16.7, -11.8, -5.5, -1.3,  3.7, 10.5 };
-// SpiritRadioSetPATabledBm(0, 1, LOAD_0_PF, pa);
-// SpiritRadioGetPATabledBm(&levels, pa);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOB, GPIO0_Pin, GPIO_PIN_SET);
 
-  HAL_Delay(10000);
-  //RadioStandBy();
-  RadioEnterShutdown();
-  //HAL_GPIO_WritePin(GPIOA, SPIRIT_SDN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIO0_GPIO_Port, GPIO0_Pin, GPIO_PIN_RESET);
 
-  HAL_Delay(10000);
+  uint8_t rbuf[2] = { 0xaa, 0xbb };
 
-  HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 32768, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+  HAL_StatusTypeDef res = HAL_TIMEOUT;
+  while (res != HAL_OK) {
+	   res =  HAL_I2C_IsDeviceReady(&hi2c1, 0x40, 10, 1000);
+	   HAL_Delay(1000);
 
-  SystemPower_Config();
-  HAL_Delay(10000);
+  }
 
-  MCU_Enter_StopMode();
-  HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
+  res = HAL_TIMEOUT;
+  while (res != HAL_OK) {
+	  res = HAL_I2C_Mem_Read(&hi2c1, 0x40, 0x11, 1, rbuf, 1, 5000);
+	  HAL_Delay(1000);
+  }
 
-	while (1) {
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
-		HAL_Delay(50);
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
-		HAL_Delay(50);
-
-	}
 
   if (mode == TX_MODE) {
 		while (1) {
-			for (int i = 0; i < 2; i++) {
+			HAL_Spirit1_Init();
+			for (int i = 0; i < 1; i++) {
 				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
 				HAL_Delay(50);
 				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
@@ -238,12 +256,10 @@ int main(void)
 
 			}
 
-			HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 32768, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
 
-			// Uncomment to enable wake up from pin
-			//HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);
-			Enter_LP_mode();
-			Exit_LP_mode();
+			Enter_Low_Power(3);
+			Exit_Low_Power();
+			//dump_regs();
 
 			AppliFrame_t txFrame;
 		    txFrame.Cmd = LED_TOGGLE;
@@ -265,11 +281,12 @@ int main(void)
   }
   else
   {
+	  Spirit1_Configure();
+
 	  while (1) {
 
 		  uint8_t cRxlen = 0;
 	      AppliReceiveBuff(aReceiveBuffer, cRxlen);
-		  HAL_Delay(5);
 
 	  }
   }
@@ -298,7 +315,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
