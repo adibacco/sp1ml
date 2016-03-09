@@ -232,17 +232,30 @@ int main(void)
   uint8_t rbuf[2] = { 0xaa, 0xbb };
 
   HAL_StatusTypeDef res = HAL_TIMEOUT;
-  while (res != HAL_OK) {
-	   res =  HAL_I2C_IsDeviceReady(&hi2c1, 0x40, 10, 1000);
-	   HAL_Delay(1000);
+  uint8_t addr = 0x00;
+  while ((res != HAL_OK) && (addr < 128)) {
+	   res =  HAL_I2C_IsDeviceReady(&hi2c1, addr << 1, 2, 1000);
+	   HAL_Delay(200);
+	   addr += 1;
 
   }
 
-  res = HAL_TIMEOUT;
-  while (res != HAL_OK) {
-	  res = HAL_I2C_Mem_Read(&hi2c1, 0x40, 0x11, 1, rbuf, 1, 5000);
-	  HAL_Delay(1000);
+  if ((res == HAL_OK) && (addr < 0x46))
+  {
+		for (int i = 0; i < 2000; i++) {
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+			HAL_Delay(50);
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
+			HAL_Delay(50);
+
+		}
   }
+
+//  res = HAL_TIMEOUT;
+//  while (res != HAL_OK) {
+//	  res = HAL_I2C_Mem_Read(&hi2c1, 0x80, 0x11, 1, rbuf, 1, 5000);
+//	  HAL_Delay(1000);
+//  }
 
 
   if (mode == TX_MODE) {
